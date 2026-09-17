@@ -1,0 +1,14 @@
+# dependencies
+node_modules
+
+# build output
+dist
+
+# local env files (keep your Firebase keys out of git if you prefer)
+.env
+.env.local
+
+# editor / OS
+.vscode
+.DS_Store
+*.log
