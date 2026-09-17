@@ -8,6 +8,7 @@ import {
 } from 'firebase/auth'
 import { auth } from '../firebase.js'
 import { loadItems, saveItems } from '../localItems.js'
+import { storeLockPassword } from '../applock.js'
 
 const AuthContext = createContext(null)
 
@@ -18,38 +19,52 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  // Items are kept in memory during the session and mirrored to localStorage.
   const [items, setItems] = useState([])
+  // unlocked = has the app lock been passed this session? It starts locked, so
+  // opening the app (even with a remembered login) asks for the password.
+  const [unlocked, setUnlocked] = useState(false)
 
-  // Firebase tells us when the user logs in / out (and remembers the session).
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser)
-      // Load this user's items from the device (not from any server).
       setItems(currentUser ? loadItems(currentUser.uid) : [])
       setLoading(false)
+      // Note: we do NOT unlock here. A restored session still has to pass the
+      // lock screen. Only an explicit login/signup unlocks (below).
     })
     return unsubscribe
   }, [])
 
   // --- Authentication (online, credentials only) ---
-  const signup = (email, password) =>
-    createUserWithEmailAndPassword(auth, email, password)
+  const signup = async (email, password) => {
+    const cred = await createUserWithEmailAndPassword(auth, email, password)
+    await storeLockPassword(cred.user.uid, password)
+    setUnlocked(true)
+    return cred
+  }
 
-  const login = (email, password) =>
-    signInWithEmailAndPassword(auth, email, password)
+  const login = async (email, password) => {
+    const cred = await signInWithEmailAndPassword(auth, email, password)
+    // Refresh the local lock hash so unlocking works offline (and after a reset).
+    await storeLockPassword(cred.user.uid, password)
+    setUnlocked(true)
+    return cred
+  }
 
-  const logout = () => signOut(auth)
+  const logout = async () => {
+    setUnlocked(false)
+    await signOut(auth)
+  }
 
   const resetPassword = (email) => sendPasswordResetEmail(auth, email)
 
+  // --- App lock controls ---
+  const unlockApp = () => setUnlocked(true)
+  const lockApp = () => setUnlocked(false)
+
   // --- Items (stored on device only) ---
   const addItem = async (item) => {
-    const newItem = {
-      id: crypto.randomUUID(),
-      createdAt: Date.now(),
-      ...item,
-    }
+    const newItem = { id: crypto.randomUUID(), createdAt: Date.now(), ...item }
     const next = [...items, newItem]
     setItems(next)
     saveItems(user.uid, next)
@@ -65,11 +80,14 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     loading,
+    unlocked,
     items,
     signup,
     login,
     logout,
     resetPassword,
+    unlockApp,
+    lockApp,
     addItem,
     deleteItem,
   }

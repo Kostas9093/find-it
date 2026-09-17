@@ -45,6 +45,9 @@ const resources = {
       fingerprintLockHint: 'Require your fingerprint to open the app.',
       unlockPrompt: 'Use your fingerprint to open Find It.',
       unlockWithFingerprint: 'Unlock with fingerprint',
+      unlock: 'Unlock',
+      lockTitle: 'Enter your password to continue',
+      logOutInstead: 'Forgot it? Log out and sign in with email',
       noFingerprint:
         'No fingerprint is set up on this phone yet. Add one in your phone settings, then try again.',
 
@@ -121,6 +124,9 @@ const resources = {
       fingerprintLockHint: 'Απαιτείται το δακτυλικό σας αποτύπωμα για να ανοίξει η εφαρμογή.',
       unlockPrompt: 'Χρησιμοποιήστε το δακτυλικό σας αποτύπωμα για να ανοίξετε το Find It.',
       unlockWithFingerprint: 'Ξεκλείδωμα με δακτυλικό αποτύπωμα',
+      unlock: 'Ξεκλείδωμα',
+      lockTitle: 'Εισάγετε τον κωδικό σας για να συνεχίσετε',
+      logOutInstead: 'Το ξεχάσατε; Αποσυνδεθείτε και συνδεθείτε με email',
       noFingerprint:
         'Δεν έχει οριστεί δακτυλικό αποτύπωμα σε αυτό το τηλέφωνο. Προσθέστε ένα στις ρυθμίσεις και δοκιμάστε ξανά.',
 

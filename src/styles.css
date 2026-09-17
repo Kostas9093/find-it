@@ -384,6 +384,11 @@ button.primary:active {
 .lock-icon {
   font-size: 44px;
   margin-bottom: 8px;
+  text-align: center;
+}
+
+.unlock-fp {
+  margin-top: 14px;
 }
 
 /* ---------- Delete / secondary buttons ---------- */

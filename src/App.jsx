@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
-import BiometricGate from './components/BiometricGate.jsx'
+import AppLock from './components/AppLock.jsx'
 import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
 import ForgotPassword from './pages/ForgotPassword.jsx'
@@ -13,9 +13,9 @@ export default function App() {
   const { loading } = useAuth()
 
   return (
-    <BiometricGate>
+    <AppLock>
       <AppRoutes loading={loading} />
-    </BiometricGate>
+    </AppLock>
   )
 }
 
