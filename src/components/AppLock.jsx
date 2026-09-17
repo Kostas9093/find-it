@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { hasLock, verifyLockPassword, storeLockPassword } from '../applock.js'
-import { isInMedian, isBiometricEnabled, verifyFingerprint } from '../biometric.js'
+import { isBiometricEnabled, verifyFingerprint } from '../biometric.js'
+import { useMedian } from '../useMedian.js'
 import LanguageSwitcher from './LanguageSwitcher.jsx'
 
 // Shows a lock screen whenever the user is logged in but hasn't passed the lock
@@ -11,12 +12,13 @@ import LanguageSwitcher from './LanguageSwitcher.jsx'
 export default function AppLock({ children }) {
   const { t } = useTranslation()
   const { user, unlocked, unlockApp, lockApp, logout } = useAuth()
+  const { biometrics } = useMedian()
 
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const fingerprintReady = isInMedian() && isBiometricEnabled()
+  const fingerprintReady = biometrics && isBiometricEnabled()
 
   const tryFingerprint = async () => {
     const ok = await verifyFingerprint()
@@ -24,10 +26,11 @@ export default function AppLock({ children }) {
   }
 
   // When the lock screen is showing and fingerprint is on, prompt it right away.
+  // Also runs once the Median bridge becomes available (fingerprintReady flips).
   useEffect(() => {
     if (user && !unlocked && fingerprintReady) tryFingerprint()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, unlocked])
+  }, [user, unlocked, fingerprintReady])
 
   // Re-lock when the app goes to the background, so returning asks again.
   useEffect(() => {

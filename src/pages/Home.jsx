@@ -3,17 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import LanguageSwitcher from '../components/LanguageSwitcher.jsx'
-import {
-  isInMedian,
-  isBiometricEnabled,
-  enableBiometricLock,
-  disableBiometricLock,
-} from '../biometric.js'
+import { isBiometricEnabled, enableBiometricLock, disableBiometricLock } from '../biometric.js'
+import { useMedian } from '../useMedian.js'
 
 export default function Home() {
   const { t } = useTranslation()
   const { logout } = useAuth()
   const navigate = useNavigate()
+  const { inApp, biometrics } = useMedian()
 
   const [fpEnabled, setFpEnabled] = useState(isBiometricEnabled())
   const [fpMsg, setFpMsg] = useState('')
@@ -21,6 +18,13 @@ export default function Home() {
 
   const toggleFingerprint = async () => {
     setFpMsg('')
+
+    // The Median biometric plugin isn't active yet.
+    if (!biometrics) {
+      setFpMsg(t('pluginNeeded'))
+      return
+    }
+
     setFpBusy(true)
     if (fpEnabled) {
       await disableBiometricLock()
@@ -60,8 +64,8 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Fingerprint lock toggle — only shown inside the Median app */}
-        {isInMedian() && (
+        {/* Fingerprint lock toggle — shown inside the Median app */}
+        {inApp && (
           <div className="setting-row">
             <div className="setting-text">
               <div className="setting-title">{t('fingerprintLock')}</div>

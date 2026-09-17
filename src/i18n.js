@@ -50,6 +50,8 @@ const resources = {
       logOutInstead: 'Forgot it? Log out and sign in with email',
       noFingerprint:
         'No fingerprint is set up on this phone yet. Add one in your phone settings, then try again.',
+      pluginNeeded:
+        'Fingerprint is not active yet. In Median, enable the "Face ID / Touch ID / Android Biometrics" plugin (Native Plugins tab), then rebuild and reinstall the app.',
 
       // Add item
       addItemTitle: 'Add an item location',
@@ -129,6 +131,8 @@ const resources = {
       logOutInstead: 'Το ξεχάσατε; Αποσυνδεθείτε και συνδεθείτε με email',
       noFingerprint:
         'Δεν έχει οριστεί δακτυλικό αποτύπωμα σε αυτό το τηλέφωνο. Προσθέστε ένα στις ρυθμίσεις και δοκιμάστε ξανά.',
+      pluginNeeded:
+        'Το δακτυλικό αποτύπωμα δεν είναι ενεργό. Στο Median, ενεργοποιήστε το plugin "Face ID / Touch ID / Android Biometrics" (καρτέλα Native Plugins), και ξαναφτιάξτε/επανεγκαταστήστε την εφαρμογή.',
 
       // Add item
       addItemTitle: 'Προσθήκη τοποθεσίας αντικειμένου',
