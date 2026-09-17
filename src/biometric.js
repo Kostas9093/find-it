@@ -70,17 +70,43 @@ export async function disableBiometricLock() {
   }
 }
 
-// Prompt the fingerprint. Resolves true on success, false otherwise.
-// Outside Median we resolve true so the app is never stuck locked in a browser.
-export async function verifyFingerprint() {
-  if (!isInMedian()) return true
-  try {
-    const data = await window.median.auth.get({
-      minimumAndroidBiometric: 'strong',
-      prompt: 'Unlock Find It',
-    })
-    return !!(data && data.success)
-  } catch {
-    return false
-  }
+// Prompt the fingerprint. Resolves { success, error }.
+// We support BOTH the callback style and the promise style of the Median
+// bridge (versions differ), plus a timeout so we never hang forever.
+// Outside Median we resolve success so the app is never stuck in a browser.
+export function promptFingerprint() {
+  if (!isInMedian()) return Promise.resolve({ success: true })
+
+  return new Promise((resolve) => {
+    let settled = false
+    const done = (result) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      resolve(result)
+    }
+    const timer = setTimeout(() => done({ success: false, error: 'timeout' }), 40000)
+
+    const handle = (data) =>
+      done({ success: !!(data && data.success), error: data && data.error })
+
+    try {
+      const maybe = window.median.auth.get({
+        minimumAndroidBiometric: 'strong',
+        prompt: 'Unlock Find It',
+        callbackFunction: handle, // callback style
+        callbackOnCancel: 1,
+      })
+      // promise style (if this bridge version returns one)
+      if (maybe && typeof maybe.then === 'function') {
+        maybe
+          .then((data) =>
+            done({ success: !!(data && data.success), error: data && data.error }),
+          )
+          .catch((e) => done({ success: false, error: String(e) }))
+      }
+    } catch (e) {
+      done({ success: false, error: String(e) })
+    }
+  })
 }

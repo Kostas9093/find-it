@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { hasLock, verifyLockPassword, storeLockPassword } from '../applock.js'
-import { isBiometricEnabled, verifyFingerprint } from '../biometric.js'
+import { isBiometricEnabled, promptFingerprint } from '../biometric.js'
 import { useMedian } from '../useMedian.js'
 import LanguageSwitcher from './LanguageSwitcher.jsx'
 
@@ -17,25 +17,48 @@ export default function AppLock({ children }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  // While the fingerprint prompt is on screen, ignore background events — the
+  // native prompt makes the app look "backgrounded" and would wrongly re-lock.
+  const authInProgress = useRef(false)
+  const triedAuto = useRef(false)
 
   const fingerprintReady = biometrics && isBiometricEnabled()
 
   const tryFingerprint = async () => {
-    const ok = await verifyFingerprint()
-    if (ok) unlockApp()
+    if (authInProgress.current) return
+    authInProgress.current = true
+    setError('')
+    const { success } = await promptFingerprint()
+    // Small delay so any late "returned to foreground" event passes before we
+    // stop ignoring background events.
+    setTimeout(() => {
+      authInProgress.current = false
+    }, 800)
+    if (success) unlockApp()
   }
 
-  // When the lock screen is showing and fingerprint is on, prompt it right away.
-  // Also runs once the Median bridge becomes available (fingerprintReady flips).
+  // Auto-prompt fingerprint once when the lock screen shows (and the bridge is
+  // ready). Only once, so a cancel doesn't loop.
   useEffect(() => {
-    if (user && !unlocked && fingerprintReady) tryFingerprint()
+    if (user && !unlocked && fingerprintReady && !triedAuto.current) {
+      triedAuto.current = true
+      tryFingerprint()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, unlocked, fingerprintReady])
+
+  // Re-arm the auto fingerprint prompt after each successful unlock, so the
+  // next time the app locks it will prompt again.
+  useEffect(() => {
+    if (unlocked) triedAuto.current = false
+  }, [unlocked])
 
   // Re-lock when the app goes to the background, so returning asks again.
   useEffect(() => {
     const onVisibility = () => {
-      if (document.visibilityState === 'hidden') lockApp()
+      if (document.visibilityState === 'hidden' && !authInProgress.current) {
+        lockApp()
+      }
     }
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
