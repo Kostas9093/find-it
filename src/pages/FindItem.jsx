@@ -6,13 +6,22 @@ import LanguageSwitcher from '../components/LanguageSwitcher.jsx'
 
 export default function FindItem() {
   const { t } = useTranslation()
-  const { items, deleteItem } = useAuth()
+  const { items, updateItem, deleteItem } = useAuth()
   const navigate = useNavigate()
 
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(null)
   const [confirming, setConfirming] = useState(false) // show delete confirmation
   const [deletedMsg, setDeletedMsg] = useState(false)
+  const [updatedMsg, setUpdatedMsg] = useState(false)
+
+  // Edit state: the modal form fields + status.
+  const [editing, setEditing] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [editLocation, setEditLocation] = useState('')
+  const [editError, setEditError] = useState('')
+  const [editBusy, setEditBusy] = useState(false)
 
   const handleConfirmDelete = async () => {
     await deleteItem(selected.id)
@@ -20,6 +29,44 @@ export default function FindItem() {
     setSelected(null)
     setQuery('')
     setDeletedMsg(true)
+  }
+
+  // Open the edit modal pre-filled with the selected item's current values.
+  const openEdit = () => {
+    setEditName(selected.name)
+    setEditDescription(selected.description || '')
+    setEditLocation(selected.location)
+    setEditError('')
+    setEditing(true)
+  }
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault()
+    setEditError('')
+
+    if (!editName.trim() || !editLocation.trim()) {
+      setEditError(t('required'))
+      return
+    }
+
+    try {
+      setEditBusy(true)
+      const updates = {
+        name: editName.trim(),
+        description: editDescription.trim(),
+        location: editLocation.trim(),
+      }
+      await updateItem(selected.id, updates)
+      // Reflect the changes in the currently shown card + search box.
+      setSelected({ ...selected, ...updates })
+      setQuery(updates.name)
+      setEditing(false)
+      setUpdatedMsg(true)
+    } catch {
+      setEditError(t('somethingWrong'))
+    } finally {
+      setEditBusy(false)
+    }
   }
 
   // Filter as the user types. We match against name AND description, so a few
@@ -40,6 +87,7 @@ export default function FindItem() {
     setSelected(item)
     setQuery(item.name)
     setDeletedMsg(false)
+    setUpdatedMsg(false)
   }
 
   return (
@@ -63,6 +111,7 @@ export default function FindItem() {
               setQuery(e.target.value)
               setSelected(null)
               setDeletedMsg(false)
+              setUpdatedMsg(false)
             }}
             autoFocus
           />
@@ -96,22 +145,82 @@ export default function FindItem() {
             <p className="location-label">{t('storedIn')}:</p>
             <p className="location-value">{selected.location}</p>
 
-            <button
-              type="button"
-              className="danger"
-              onClick={() => setConfirming(true)}
-            >
-              {t('delete')}
-            </button>
+            <div className="card-actions">
+              <button type="button" className="edit-btn" onClick={openEdit}>
+                {t('edit')}
+              </button>
+              <button
+                type="button"
+                className="danger"
+                onClick={() => setConfirming(true)}
+              >
+                {t('delete')}
+              </button>
+            </div>
           </div>
         )}
 
+        {updatedMsg && <p className="success center">{t('itemUpdated')}</p>}
         {deletedMsg && <p className="success center">{t('itemDeleted')}</p>}
 
         {!query.trim() && !selected && !deletedMsg && (
           <p className="muted center">{t('startTyping')}</p>
         )}
       </div>
+
+      {/* Edit dialog */}
+      {editing && selected && (
+        <div className="modal-overlay" onClick={() => setEditing(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>{t('editItemTitle')}</h3>
+
+            <form onSubmit={handleSaveEdit}>
+              <label>{t('itemNameLabel')}</label>
+              <input
+                type="text"
+                value={editName}
+                placeholder={t('itemNamePlaceholder')}
+                onChange={(e) => setEditName(e.target.value)}
+                autoFocus
+                required
+              />
+
+              <label>{t('itemDescriptionLabel')}</label>
+              <textarea
+                rows={3}
+                value={editDescription}
+                placeholder={t('itemDescriptionPlaceholder')}
+                onChange={(e) => setEditDescription(e.target.value)}
+              />
+
+              <label>{t('itemLocationLabel')}</label>
+              <input
+                type="text"
+                value={editLocation}
+                placeholder={t('itemLocationPlaceholder')}
+                onChange={(e) => setEditLocation(e.target.value)}
+                required
+              />
+
+              {editError && <p className="error">{editError}</p>}
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setEditing(false)}
+                  disabled={editBusy}
+                >
+                  {t('cancel')}
+                </button>
+                <button type="submit" className="primary" disabled={editBusy}>
+                  {editBusy ? t('loading') : t('saveChanges')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation dialog before deleting */}
       {confirming && selected && (

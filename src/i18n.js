@@ -72,6 +72,10 @@ const resources = {
       noResults: 'No matching items found.',
       startTyping: 'Start typing to search your items.',
       delete: 'Delete',
+      edit: 'Edit',
+      editItemTitle: 'Edit item',
+      saveChanges: 'Save changes',
+      itemUpdated: 'Changes saved.',
       cancel: 'Cancel',
       confirmDeleteTitle: 'Delete this item?',
       confirmDeleteMessage:
@@ -153,6 +157,10 @@ const resources = {
       noResults: 'Δεν βρέθηκαν αντικείμενα.',
       startTyping: 'Ξεκινήστε να πληκτρολογείτε για αναζήτηση.',
       delete: 'Διαγραφή',
+      edit: 'Επεξεργασία',
+      editItemTitle: 'Επεξεργασία αντικειμένου',
+      saveChanges: 'Αποθήκευση αλλαγών',
+      itemUpdated: 'Οι αλλαγές αποθηκεύτηκαν.',
       cancel: 'Ακύρωση',
       confirmDeleteTitle: 'Διαγραφή αυτού του αντικειμένου;',
       confirmDeleteMessage:

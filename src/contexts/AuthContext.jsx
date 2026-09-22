@@ -71,6 +71,14 @@ export function AuthProvider({ children }) {
     return newItem
   }
 
+  const updateItem = async (id, updates) => {
+    const next = items.map((item) =>
+      item.id === id ? { ...item, ...updates } : item,
+    )
+    setItems(next)
+    saveItems(user.uid, next)
+  }
+
   const deleteItem = async (id) => {
     const next = items.filter((item) => item.id !== id)
     setItems(next)
@@ -89,6 +97,7 @@ export function AuthProvider({ children }) {
     unlockApp,
     lockApp,
     addItem,
+    updateItem,
     deleteItem,
   }
 
